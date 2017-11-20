@@ -32,16 +32,36 @@ public class TemplateGenerator {
 	private String getTemplateFilename() {
 		return filename+".template";
 	}
+	public void timerOff() throws IOException {
+		//TBD
+		/*
+		String line=null;
+		BufferedWriter out=new BufferedWriter(new OutputStreamWriter(html,Charset.forName("UTF-8")));
+		while((line=reader.readLine())!=null) {
+			if(line.contains("countdown1")) {
+				logger.info("Turning the timer countdown off.");
+				out.write("<!-- <span class=\"redboldmedium\"><span id=\"countdown1\">2017-12-25 00:00:00 GMT+00:00</span> left to submit your log</span><br><br> -->");
+				out.newLine();				
+			} else {
+				out.write(line);
+				out.newLine();				
+			}
+		}*/
+	}
 	public void run() throws IOException {
 		OutputStream template=new FileOutputStream(new File(getTemplateFilename()));
 		BufferedWriter out=new BufferedWriter(new OutputStreamWriter(template,Charset.forName("UTF-8")));
 		String line=null;
 		while((line=reader.readLine())!=null) {
-			//logger.trace("TemplateGenerator",line);
-			out.write(line);
-			out.newLine();
 			// Turn the timer on
-			
+			if(line.contains("countdown1")) {
+				logger.info("Turning the timer countdown on.");
+				out.write("<span class=\"redboldmedium\"><span id=\"countdown1\">2017-12-25 00:00:00 GMT+00:00</span> left to submit your log</span><br><br>");
+				out.newLine();
+			} else {
+				out.write(line);
+				out.newLine();				
+			}
 			// Find "SWA - STRAIGHT KEY CATEGORY"
 			if(line.contains("SWA - STRAIGHT KEY CATEGORY")) {
 				insertReplacementTag(out,"KEY");
