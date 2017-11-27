@@ -12,11 +12,15 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 
 import com.borasoft.naqcc.sprint.utils.Logger;
 
 public class TemplateGenerator {
-	private String filename;
+	private String filename; // filename without extension
 	private InputStream html;
 	private BufferedReader reader;
 	private Logger logger=Logger.getInstance();
@@ -30,13 +34,12 @@ public class TemplateGenerator {
 		reader = new BufferedReader(new InputStreamReader(is));
 	}
 	private String getTemplateFilename() {
-		return filename+".template";
+		return filename.substring(filename.lastIndexOf("/")+1,filename.length())+".template";
 	}
 	public void timerOff() throws IOException {
-		//TBD
-		/*
 		String line=null;
-		BufferedWriter out=new BufferedWriter(new OutputStreamWriter(html,Charset.forName("UTF-8")));
+		FileOutputStream newhtml=new FileOutputStream(filename+"_new.html");
+		BufferedWriter out=new BufferedWriter(new OutputStreamWriter(newhtml,Charset.forName("UTF-8")));
 		while((line=reader.readLine())!=null) {
 			if(line.contains("countdown1")) {
 				logger.info("Turning the timer countdown off.");
@@ -46,8 +49,22 @@ public class TemplateGenerator {
 				out.write(line);
 				out.newLine();				
 			}
-		}*/
+		}
+		out.close();
+		// Rename filename.html to filename_old.html and filename_new.html to filename.html
+        frename(filename+".html",filename+"_old.html");
+        frename(filename+"_new.html",filename+".html");
 	}
+    private boolean frename(String source,String dest) {
+    	boolean result=false;
+    	result= new File(source).renameTo(new File(dest));
+    	if(!result) {
+    		logger.error("File rename failed: "+source+" --> "+dest);
+    	} else {
+    		logger.info(source+" has been renamed to "+dest+".");
+    	}
+    	return result;
+    }
 	public void run() throws IOException {
 		OutputStream template=new FileOutputStream(new File(getTemplateFilename()));
 		BufferedWriter out=new BufferedWriter(new OutputStreamWriter(template,Charset.forName("UTF-8")));
@@ -58,10 +75,17 @@ public class TemplateGenerator {
 				logger.info("Turning the timer countdown on.");
 				out.write("<span class=\"redboldmedium\"><span id=\"countdown1\">2017-12-25 00:00:00 GMT+00:00</span> left to submit your log</span><br><br>");
 				out.newLine();
+			} else if(line.contains("VA3PEN Comments")) {
+				// Add VA3PEN comment
+				DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm");
+				Date date = new Date();
+				String datetime=dateFormat.format(date);
+				out.write("<span class=\"blackboldmedium\">VA3PEN Comments - </span>Results produced on "+datetime+" EST.<br><br>");
+				out.newLine();
 			} else {
 				out.write(line);
 				out.newLine();				
-			}
+			}			
 			// Find "SWA - STRAIGHT KEY CATEGORY"
 			if(line.contains("SWA - STRAIGHT KEY CATEGORY")) {
 				insertReplacementTag(out,"KEY");

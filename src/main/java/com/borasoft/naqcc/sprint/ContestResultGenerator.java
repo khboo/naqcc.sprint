@@ -42,7 +42,7 @@ public final class ContestResultGenerator {
     System.exit(0);
   }
   
-  private void initialize() throws IOException {
+  public void initialize() throws IOException {
     Properties props = new Properties();
     props.load(new FileInputStream("naqcc.properties"));
     if(props.containsKey("SPRINT_MODE")) {
@@ -102,6 +102,8 @@ public final class ContestResultGenerator {
       file = files[i];
       if(file.getName().equalsIgnoreCase(submissionOrderFilename))
         continue; // skip submission.lst
+      if(!file.getName().startsWith("NAQCC") || !file.getName().endsWith(".txt"))
+    	  continue;
       streamReader = new InputStreamReader(new FileInputStream(file));
       loggerReader = new AutoLoggerReader(streamReader);
       entry = loggerReader.readLogEntry();

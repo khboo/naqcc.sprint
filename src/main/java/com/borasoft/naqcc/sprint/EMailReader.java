@@ -188,12 +188,14 @@ public final class EMailReader {
           System.out.println("--------------------------");
           System.out.println("MESSAGE #" + (i + 1) + ":");
           dumpEnvelope(msgs[i]);
-          if(msgs[i].getSubject().contains(subjectToSearch)) {
+          //if(msgs[i].getSubject().contains(subjectToSearch)) {
+          if(msgs[i].getSubject().trim().equalsIgnoreCase(subjectToSearch)) {  
             file = new File(outputDir,baseFilename + i + ".txt");
             partWriter = new PrintWriter(file);
             dumpPart(msgs[i],partWriter);
             numEMailProcessed++;
             partWriter.close();
+            msgs[i].setFlag(Flag.DELETED,true);
           }
         }
       } else {
