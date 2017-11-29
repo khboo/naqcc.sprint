@@ -124,7 +124,7 @@ public class AutoLoggerWriter {
 	    if(!stringsKeyerQRO.isEmpty()) {
 	      stringsKeyer.addAll(stringsKeyerQRO);
 	    }
-	    // Now, we know all the participants in each category so let's get to work.
+	    // Now, we know all the participants in each category so let's get to work
 	    htmlGen.replaceTokens(temp,outputHTML,"${"+key+"KEY}",stringsKey);
 	    temp = outputHTML;
       outputHTML = new StringBuffer();

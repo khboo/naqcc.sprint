@@ -12,10 +12,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
 
 import com.borasoft.naqcc.sprint.utils.Logger;
 
@@ -74,13 +70,6 @@ public class TemplateGenerator {
 			if(line.contains("countdown1")) {
 				logger.info("Turning the timer countdown on.");
 				out.write("<span class=\"redboldmedium\"><span id=\"countdown1\">2017-12-25 00:00:00 GMT+00:00</span> left to submit your log</span><br><br>");
-				out.newLine();
-			} else if(line.contains("VA3PEN Comments")) {
-				// Add VA3PEN comment
-				DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm");
-				Date date = new Date();
-				String datetime=dateFormat.format(date);
-				out.write("<span class=\"blackboldmedium\">VA3PEN Comments - </span>Results produced on "+datetime+" EST.<br><br>");
 				out.newLine();
 			} else {
 				out.write(line);

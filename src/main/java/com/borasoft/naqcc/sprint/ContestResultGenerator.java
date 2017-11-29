@@ -1,6 +1,7 @@
 package com.borasoft.naqcc.sprint;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -10,12 +11,14 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Vector;
 import java.util.Properties;
 import com.borasoft.naqcc.sprint.utils.Logger;
-
 
 public final class ContestResultGenerator {
   private String outputDir;
@@ -126,6 +129,31 @@ public final class ContestResultGenerator {
       }
     }
     updateSubmissionOrderList(callsigns);
+  }
+  
+  public void addVA3PENComments() throws IOException {
+	  //pre-condition: outputFilename is set.
+		BufferedReader br = null;
+		String line;
+		br=new BufferedReader(new FileReader(outputFilename));
+		StringBuilder builder=new StringBuilder();
+		while ((line=br.readLine()) !=null) {
+			if(line.contains("VA3PEN Comments")) {
+				// Add VA3PEN comment
+				DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm");
+				Date date = new Date();
+				String datetime=dateFormat.format(date);
+				builder.append("<span class=\"blackboldmedium\">VA3PEN Comments - </span>Results produced on "+datetime+" EST.<br><br>");
+				builder.append("\n");
+			} else {
+				builder.append(line);
+				builder.append("\n");
+			}
+		}
+		br.close();	 
+		BufferedWriter bw=new BufferedWriter(new FileWriter(outputFilename));
+		bw.write(builder.toString());
+		bw.close();
   }
   
   public void generateHTMLFromArchive(String[] args)  throws FileNotFoundException, IOException {
