@@ -32,7 +32,7 @@ public class TemplateGenerator {
 	private String getTemplateFilename() {
 		return filename.substring(filename.lastIndexOf("/")+1,filename.length())+".template";
 	}
-	public void timerOff() throws IOException {
+	public void disableTimer() throws IOException {
 		String line=null;
 		FileOutputStream newhtml=new FileOutputStream(filename+"_new.html");
 		BufferedWriter out=new BufferedWriter(new OutputStreamWriter(newhtml,Charset.forName("UTF-8")));

@@ -163,6 +163,16 @@ public class App {
 	        return false;
 		}
     }
+    private boolean disableTimer(String sprintFilepath) {
+		try {
+			TemplateGenerator gen = new TemplateGenerator(sprintFilepath);
+	        gen.disableTimer();
+	        return true;
+		} catch (Exception e) {
+			logger.error("Disabling the countdown timer failed.");
+	        return false;
+		}
+    }
     
     @Command(description="Finish the current Sprint. No more log submissions are allowed.")
     public boolean close() {
@@ -200,9 +210,19 @@ public class App {
         	logger.error("Upload failed.\n"+e.getMessage());
             return false;
         }
+        // Countdown timer
+        disableTimer(naqcc_root+"/"+sprintfilename);
+        try {
+            logger.info("Disabling countdown timer...");
+            ftpuploader.uploadFile(naqcc_root+"/"+sprintfilename,sprintfilename,"/sprint/");
+            logger.info("The countdown timer disabled successfully.");
+        } catch (Exception e) {
+        	logger.error("Upload failed.\n"+e.getMessage());
+            return false;
+        }        
         ftpuploader.disconnect();
         logger.info("Upload completed.");   
-        logger.info("The sprint closed successfully.");
+        logger.info("The sprint closed successfully.");       
         return true;
     }
 
