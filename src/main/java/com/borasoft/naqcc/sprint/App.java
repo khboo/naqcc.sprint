@@ -30,6 +30,7 @@ public class App {
 	private String user;
 	private String password;
 	private String sprintfilename;
+	private String log_closing;
 	{
     	Properties props=new Properties();
     	try {
@@ -47,6 +48,7 @@ public class App {
 			props.load(is);
 			naqcc_root=props.getProperty("SPRINT_HOME");
 			sprintfilename=props.getProperty("OUTPUT_FILENAME");
+			log_closing=props.getProperty("LOG_CLOSING");
 		} catch (IOException e) {
 			logger.error("ftp.properties file not found.");
 		}
@@ -233,7 +235,7 @@ public class App {
     
     @Command(description="Update the sprint results. Pass true for auto, or false for manual mode.",name="update")
     public boolean updateSprintResult(boolean auto) {
-    	ContestResultGeneratorControl control=new ContestResultGeneratorControl(host,user,password,naqcc_root,sprintfilename);
+    	ContestResultGeneratorControl control=new ContestResultGeneratorControl(host,user,password,naqcc_root,sprintfilename,log_closing);
     	if(!auto) {
         	return control.updateSprintResult(); // manual mode
     	}

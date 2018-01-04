@@ -31,6 +31,7 @@ public class ContestResultGeneratorControl {
 	private String emailServer;
 	private String emailUser;
 	private String emailPassword;
+	private String log_closing;
 	{
     	Properties props=new Properties();
     	try {
@@ -44,12 +45,13 @@ public class ContestResultGeneratorControl {
 			logger.error("mail.properties file not found.");
 		}
 	}
-	public ContestResultGeneratorControl(String host,String user,String password,String naqccRoot,String sprintfilename) {
+	public ContestResultGeneratorControl(String host,String user,String password,String naqccRoot,String sprintfilename,String log_closing) {
 		this.host=host;
 		this.user=user;
 		this.password=password;
 		this.naqcc_root=naqccRoot;
 		this.sprintfilename=sprintfilename;
+		this.log_closing=log_closing;
 	}
     public boolean updateSprintResult() {
         logger.message("\nNAQCC Sprint Result Page Generator\n");
@@ -90,14 +92,15 @@ public class ContestResultGeneratorControl {
     }
 
 	public void performScheduledUpdates() throws ParseException {
-		// TBD - externalize the closing date
-		final Date closingDate1=df.parse("2017/12/24 19:00:00 EST");
-		final Date closingDate2=df.parse("2017/12/24 23:00:00 EST");
+		final Date closingDate1=df.parse(log_closing);
+		final Date closingDate2=new Date(closingDate1.getTime()+1000*60*60*3); // 3 hours after the closing date		
 		logger.info("The scheduled updates will be continued until "+closingDate1.toString()+".");
+		logger.info("The scheduled task will be shutdown as late as: "+closingDate2.toString());
 		final Runnable updater = new Runnable() {
 			public void run() { 
 				updateSprintResult(); 
-				Date now=new Date();		    	  
+				Date now=new Date();	
+				logger.info("Current datetime is: "+now.toString());
 				if(now.after(closingDate1)) {
 					logger.info("The scheduled updates will be terminated.");
 					scheduler.shutdownNow();
@@ -105,7 +108,7 @@ public class ContestResultGeneratorControl {
 				}
 			}
 		};
-		final ScheduledFuture<?> updaterHandle = scheduler.scheduleAtFixedRate(updater,10,60*60*3,SECONDS); // TBD     
+		final ScheduledFuture<?> updaterHandle = scheduler.scheduleAtFixedRate(updater,10,60*60*3,SECONDS);     
 		scheduler.schedule(new Runnable() {
 				public void run() { 
 					updaterHandle.cancel(true); 
