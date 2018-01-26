@@ -1,6 +1,5 @@
 package com.borasoft.naqcc.sprint;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,12 +24,13 @@ import asg.cliche.ShellFactory;
  */
 public class App {
 	private Logger logger=Logger.getInstance();
-	private String naqcc_root="/Users/kihupboo/naqcc";
+	private String naqcc_root;
 	private String host;
 	private String user;
 	private String password;
 	private String sprintfilename;
 	private String log_closing;
+	private String autologger_home;
 	{
     	Properties props=new Properties();
     	try {
@@ -49,6 +49,7 @@ public class App {
 			naqcc_root=props.getProperty("SPRINT_HOME");
 			sprintfilename=props.getProperty("OUTPUT_FILENAME");
 			log_closing=props.getProperty("LOG_CLOSING");
+			autologger_home=props.getProperty("AUTOLOGGER_HOME");
 		} catch (IOException e) {
 			logger.error("ftp.properties file not found.");
 		}
@@ -60,7 +61,7 @@ public class App {
         System.out.println("Bye.");
     }
     
-    @Command(description="Prepare to start a Sprint. Sprint logs can be submitted.")
+    @Command(description="Prepare to start a Sprint. Sprint logs can be submitted.",name="open")
     public boolean open() {
     	/* Download the files for a Sprint opening */
         FTPDownloader ftpDownloader;
@@ -70,16 +71,29 @@ public class App {
 			logger.error("ftp connection failed for download.\n"+e.getMessage());
 			return false;
 		}
-    	// Mail Forms
         try {
-            logger.info("Downloading sprintlog.txt...");
-            ftpDownloader.downloadFile("/mailforms/sprintlog.txt", naqcc_root+"/mailforms/sprintlog.txt");
-            logger.info("Downloading sprintlog_va3pen.txt...");
-            ftpDownloader.downloadFile("/mailforms/sprintlog_va3pen.txt", naqcc_root+"/mailforms/sprintlog_va3pen.txt");
+            logger.info("Downloading autologger.ini files...");
+            ftpDownloader.downloadFile(autologger_home+"/autologger.ini.va3pen_mw", naqcc_root+"/autologger.ini.va3pen_mw");
+            ftpDownloader.downloadFile(autologger_home+"/autologger.ini.closed", naqcc_root+"/autologger.ini.closed");
         } catch (Exception e) {
         	logger.error("Download failed.\n"+e.getMessage());
             return false;
-        }  
+        }
+    	/* Upload autologger.ini and the Sprint is ready. */
+        FTPUploader ftpUploader;
+		try {
+			ftpUploader = new FTPUploader(host,user,password);
+		} catch (Exception e) {
+			logger.error("ftp connection failed for upload.\n"+e.getMessage());
+			return false;
+		}
+		try {
+			ftpUploader.uploadFile(naqcc_root+"/autologger.ini.va3pen_mw","autologger.ini",autologger_home+"/");
+		} catch (Exception e) {
+			logger.error("Upload failed.\n"+e.getMessage());
+			return false;
+		}
+		ftpUploader.disconnect();
         // Sprint HTML file - e.g., /sprint/sprint201712mw.html, /sprint/sprint2018_160.html
         if(sprintfilename==null) {
         	logger.error("Cannot find sprint filename.");
@@ -91,49 +105,10 @@ public class App {
         } catch (Exception e) {
         	logger.error("Download failed.\n"+e.getMessage());
             return false;
-        }  
-        // Sprint open/close - /sprintlog.html <- sprintlog_on.html, sprintlog_off.html
-        try {
-            logger.info("Downloading sprintlog_on.html...");
-            ftpDownloader.downloadFile("/sprintlog_on.html", naqcc_root+"/sprintlog_on.html");
-            logger.info("Downloading sprintlog_off.html...");
-            ftpDownloader.downloadFile("/sprintlog_off.html", naqcc_root+"/sprintlog_off.html");        
-        } catch (Exception e) {
-        	logger.error("Download failed.\n"+e.getMessage());
-            return false;
-        }          
+        }           
         ftpDownloader.disconnect();
-        logger.info("Download completed.");     
+        logger.info("Download completed.");       
         
-    	/* Rename the files */
-        if(!frename(naqcc_root+"/mailforms/sprintlog.txt",naqcc_root+"/mailforms/sprintlog_original.txt")) {
-        	return false;
-        }
-        if(!frename(naqcc_root+"/mailforms/sprintlog_va3pen.txt",naqcc_root+"/mailforms/sprintlog.txt")) {
-        	return false;
-        }
-        if(!frename(naqcc_root+"/sprintlog_on.html",naqcc_root+"/sprintlog.html")) {
-        	return false;
-        }  
-        
-    	/* Upload the updated files, and the Sprint is ready. */
-        // - sprintlog.html,mailforms/sprintlog.txt
-        FTPUploader ftpUploader;
-		try {
-			ftpUploader = new FTPUploader(host,user,password);
-		} catch (Exception e) {
-			logger.error("ftp connection failed for upload.\n"+e.getMessage());
-			return false;
-		}
-		try {
-			ftpUploader.uploadFile(naqcc_root+"/sprintlog.html","sprintlog.html","/");
-			ftpUploader.uploadFile(naqcc_root+"/mailforms/sprintlog.txt","sprintlog.txt","/mailforms/");
-		} catch (Exception e) {
-			logger.error("Upload failed.\n"+e.getMessage());
-			return false;
-		}
-		ftpUploader.disconnect();
- 
         /* Prepare sprint template file(.TEMPLATE) from sprintFilename(.HTML). */
         logger.info("Creating a sprint template file from: "+sprintfilename+".");
         if(createSprintTemplateFile(naqcc_root+"/sprint/"+sprintfilename)) {
@@ -145,6 +120,7 @@ public class App {
         logger.info("All set for the sprint.");        
         return true;
     }
+    /*
     private boolean frename(String source,String dest) {
     	boolean result=false;
     	result= new File(source).renameTo(new File(dest));
@@ -155,6 +131,7 @@ public class App {
     	}
     	return result;
     }
+    */
     private boolean createSprintTemplateFile(String sprintFilepath) {
 		try {
 			TemplateGenerator gen = new TemplateGenerator(sprintFilepath);
@@ -176,20 +153,8 @@ public class App {
 		}
     }
     
-    @Command(description="Finish the current Sprint. No more log submissions are allowed.")
+    @Command(description="Finish the current Sprint. No more log submissions are allowed.",name="close")
     public boolean close() {
-    	/* Rename the files for a Sprint closing. */
-        if(!frename(naqcc_root+"/mailforms/sprintlog.txt",naqcc_root+"/mailforms/sprintlog_va3pen.txt")) {
-        	return false;
-        }
-        if(!frename(naqcc_root+"/mailforms/sprintlog_original.txt",naqcc_root+"/mailforms/sprintlog.txt")) {
-        	return false;
-        } 
-        if(!frename(naqcc_root+"/sprintlog_off.html",naqcc_root+"/sprintlog.html")) {
-        	return false;
-        }
-        
-    	/* Upload the original files for a sprint closing */
         FTPUploader ftpuploader;
 		try {
 			ftpuploader = new FTPUploader(host,user,password);
@@ -197,21 +162,14 @@ public class App {
 			logger.error("ftp connection failed.\n"+e.getMessage());
 			return false;
 		}
-    	// Mail Forms
+    	// autologger.ini.closed -> autologger.ini
         try {
-            logger.info("Uploading sprintlog.txt...");
-            ftpuploader.uploadFile(naqcc_root+"/mailforms/sprintlog.txt","sprintlog.txt","/mailforms/");
+            logger.info("Uploading autologger.ini.closed...");
+            ftpuploader.uploadFile(naqcc_root+"/autologger.ini.closed","autologger.ini",autologger_home+"/");
         } catch (Exception e) {
         	logger.error("Upload failed.\n"+e.getMessage());
             return false;
         }  
-        try {
-            logger.info("Uploading sprintlog.html...");
-            ftpuploader.uploadFile(naqcc_root+"/sprintlog.html","sprintlog.html","/");
-        } catch (Exception e) {
-        	logger.error("Upload failed.\n"+e.getMessage());
-            return false;
-        }
         // Countdown timer
         disableTimer(naqcc_root+"/"+sprintfilename);
         try {
