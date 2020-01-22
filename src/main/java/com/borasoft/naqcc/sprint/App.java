@@ -30,7 +30,7 @@ public class App {
 	private String password;
 	private String sprintfilename;
 	private String log_closing;
-	private String autologger_home;
+	private String sprint_mode;
 	{
     	Properties props=new Properties();
     	try {
@@ -49,9 +49,9 @@ public class App {
 			naqcc_root=props.getProperty("SPRINT_HOME");
 			sprintfilename=props.getProperty("OUTPUT_FILENAME");
 			log_closing=props.getProperty("LOG_CLOSING");
-			autologger_home=props.getProperty("AUTOLOGGER_HOME");
+			sprint_mode=props.getProperty("SPRINT_MODE");
 		} catch (IOException e) {
-			logger.error("ftp.properties file not found.");
+			logger.error("naqcc.properties file not found.");
 		}
 	}
 	
@@ -59,6 +59,39 @@ public class App {
     	// Type 'exit' to terminate the shell.
         ShellFactory.createConsoleShell("","",new App()).commandLoop();
         System.out.println("Bye.");
+    }
+    
+    @Command(description="Open/Close log submissions.", name="logSubmissions")
+    public boolean logSubmissions(boolean flag) {
+        FTPUploader ftpUploader;
+		try {
+			ftpUploader = new FTPUploader(host,user,password);
+		} catch (Exception e) {
+			logger.error("ftp connection failed for upload.\n"+e.getMessage());
+			return false;
+		} 
+		try {
+			if(!flag) {
+				ftpUploader.uploadFile(naqcc_root+"/autologger.ini.closed","autologger.ini","./");
+			} else {
+				if(sprint_mode.equalsIgnoreCase("0")) {
+					ftpUploader.uploadFile(naqcc_root+"/autologger.ini.va3pen.mw","autologger.ini","./");
+				} else {
+					ftpUploader.uploadFile(naqcc_root+"/autologger.ini.va3pen.160","autologger.ini","./");
+				}
+			}
+		} catch (Exception e) {
+			logger.error("Upload failed.\n"+e.getMessage());
+			return false;
+		} finally {
+			ftpUploader.disconnect();
+		}
+		if(flag) {
+			logger.info("Log submission opened now."); 
+		} else {
+			logger.info("Log submission closed now.");
+		}
+        return true;
     }
     
     @Command(description="Prepare to start a Sprint. Sprint logs can be submitted.",name="open")
@@ -71,15 +104,19 @@ public class App {
 			logger.error("ftp connection failed for download.\n"+e.getMessage());
 			return false;
 		}
+    	/*
         try {
             logger.info("Downloading autologger.ini files...");
-            ftpDownloader.downloadFile(autologger_home+"/autologger.ini.va3pen_mw", naqcc_root+"/autologger.ini.va3pen_mw");
+            ftpDownloader.downloadFile(autologger_home+"/autologger.ini.va3pen.mw", naqcc_root+"/autologger.ini.va3pen.mw");
             ftpDownloader.downloadFile(autologger_home+"/autologger.ini.closed", naqcc_root+"/autologger.ini.closed");
+            ftpDownloader.disconnect();
         } catch (Exception e) {
         	logger.error("Download failed.\n"+e.getMessage());
             return false;
         }
+        */
     	/* Upload autologger.ini and the Sprint is ready. */
+    	/*
         FTPUploader ftpUploader;
 		try {
 			ftpUploader = new FTPUploader(host,user,password);
@@ -88,17 +125,24 @@ public class App {
 			return false;
 		}
 		try {
-			ftpUploader.uploadFile(naqcc_root+"/autologger.ini.va3pen_mw","autologger.ini",autologger_home+"/");
+			ftpUploader.uploadFile(naqcc_root+"/autologger.ini.va3pen.mw","autologger.ini",autologger_home+"/");
 		} catch (Exception e) {
 			logger.error("Upload failed.\n"+e.getMessage());
 			return false;
 		}
 		ftpUploader.disconnect();
+		*/
         // Sprint HTML file - e.g., /sprint/sprint201712mw.html, /sprint/sprint2018_160.html
         if(sprintfilename==null) {
         	logger.error("Cannot find sprint filename.");
         	return false;
         }
+		try {
+			ftpDownloader = new FTPDownloader(host,user,password);
+		} catch (Exception e) {
+			logger.error("ftp connection failed for download.\n"+e.getMessage());
+			return false;
+		}        
         try {
             logger.info("Downloading "+sprintfilename+"...");
             ftpDownloader.downloadFile("/sprint/"+sprintfilename,naqcc_root+"/sprint/"+sprintfilename);
@@ -163,13 +207,15 @@ public class App {
 			return false;
 		}
     	// autologger.ini.closed -> autologger.ini
+		/*
         try {
             logger.info("Uploading autologger.ini.closed...");
             ftpuploader.uploadFile(naqcc_root+"/autologger.ini.closed","autologger.ini",autologger_home+"/");
         } catch (Exception e) {
         	logger.error("Upload failed.\n"+e.getMessage());
             return false;
-        }  
+        } 
+        */ 
         // Countdown timer
         disableTimer(naqcc_root+"/"+sprintfilename);
         try {
