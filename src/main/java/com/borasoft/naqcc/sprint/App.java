@@ -64,19 +64,24 @@ public class App {
     @Command(description="Open/Close log submissions.", name="logSubmissions")
     public boolean logSubmissions(boolean flag) {
         FTPUploader ftpUploader;
+        FTPDownloader ftpDownloader;
 		try {
 			ftpUploader = new FTPUploader(host,user,password);
+			ftpDownloader = new FTPDownloader(host,user,password);
 		} catch (Exception e) {
 			logger.error("ftp connection failed for upload.\n"+e.getMessage());
 			return false;
 		} 
 		try {
 			if(!flag) {
+				ftpDownloader.downloadFile("./autologger.ini.closed",naqcc_root+"/autologger.ini.closed");
 				ftpUploader.uploadFile(naqcc_root+"/autologger.ini.closed","autologger.ini","./");
 			} else {
 				if(sprint_mode.equalsIgnoreCase("0")) {
+					ftpDownloader.downloadFile("./autologger.ini.va3pen.mw",naqcc_root+"/autologger.ini.va3pen.mw");
 					ftpUploader.uploadFile(naqcc_root+"/autologger.ini.va3pen.mw","autologger.ini","./");
 				} else {
+					ftpDownloader.downloadFile("./autologger.ini.va3pen.160", naqcc_root+"/autologger.ini.va3pen.160");
 					ftpUploader.uploadFile(naqcc_root+"/autologger.ini.va3pen.160","autologger.ini","./");
 				}
 			}
@@ -104,34 +109,6 @@ public class App {
 			logger.error("ftp connection failed for download.\n"+e.getMessage());
 			return false;
 		}
-    	/*
-        try {
-            logger.info("Downloading autologger.ini files...");
-            ftpDownloader.downloadFile(autologger_home+"/autologger.ini.va3pen.mw", naqcc_root+"/autologger.ini.va3pen.mw");
-            ftpDownloader.downloadFile(autologger_home+"/autologger.ini.closed", naqcc_root+"/autologger.ini.closed");
-            ftpDownloader.disconnect();
-        } catch (Exception e) {
-        	logger.error("Download failed.\n"+e.getMessage());
-            return false;
-        }
-        */
-    	/* Upload autologger.ini and the Sprint is ready. */
-    	/*
-        FTPUploader ftpUploader;
-		try {
-			ftpUploader = new FTPUploader(host,user,password);
-		} catch (Exception e) {
-			logger.error("ftp connection failed for upload.\n"+e.getMessage());
-			return false;
-		}
-		try {
-			ftpUploader.uploadFile(naqcc_root+"/autologger.ini.va3pen.mw","autologger.ini",autologger_home+"/");
-		} catch (Exception e) {
-			logger.error("Upload failed.\n"+e.getMessage());
-			return false;
-		}
-		ftpUploader.disconnect();
-		*/
         // Sprint HTML file - e.g., /sprint/sprint201712mw.html, /sprint/sprint2018_160.html
         if(sprintfilename==null) {
         	logger.error("Cannot find sprint filename.");
@@ -164,18 +141,7 @@ public class App {
         logger.info("All set for the sprint.");        
         return true;
     }
-    /*
-    private boolean frename(String source,String dest) {
-    	boolean result=false;
-    	result= new File(source).renameTo(new File(dest));
-    	if(!result) {
-    		logger.error("File rename failed: "+source+" --> "+dest);
-    	} else {
-    		logger.info(source+" has been renamed to "+dest+".");
-    	}
-    	return result;
-    }
-    */
+
     private boolean createSprintTemplateFile(String sprintFilepath) {
 		try {
 			TemplateGenerator gen = new TemplateGenerator(sprintFilepath);
@@ -206,16 +172,7 @@ public class App {
 			logger.error("ftp connection failed.\n"+e.getMessage());
 			return false;
 		}
-    	// autologger.ini.closed -> autologger.ini
-		/*
-        try {
-            logger.info("Uploading autologger.ini.closed...");
-            ftpuploader.uploadFile(naqcc_root+"/autologger.ini.closed","autologger.ini",autologger_home+"/");
-        } catch (Exception e) {
-        	logger.error("Upload failed.\n"+e.getMessage());
-            return false;
-        } 
-        */ 
+
         // Countdown timer
         disableTimer(naqcc_root+"/"+sprintfilename);
         try {
